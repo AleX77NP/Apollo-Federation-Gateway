@@ -1,11 +1,28 @@
 const { ApolloServer } = require('apollo-server');
 const { ApolloGateway } = require('@apollo/gateway');
-const { readFileSync } = require('fs')  
-
-const supergraphSdl = readFileSync('./supergraph.graphql').toString()
+const { readFile } = require('fs/promises');  
+const { watch } = require('fs');
 
 const gateway = new ApolloGateway({
-  supergraphSdl
+  async superGraphSdl({ update, healthCheck }) {
+    
+    const watcher = watch('./supergraph.graphql');
+    watch.once('change', async () => {
+        try {
+            const updatedSuperGraph = await readFile('./supergraph.graphql', 'utf-8');
+            await healthCheck(updatedSuperGraph)
+            update(updatedSuperGraph)
+        } catch(e) {
+            console.error(e)
+        }
+    });
+      return {
+        supergraphSdl: await readFile('./supergraph.graphql', 'utf-8'),
+        async cleanup() {
+            watcher.close()
+        }
+      }
+  },
 });
 
 const server = new ApolloServer({
