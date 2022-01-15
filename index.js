@@ -4,10 +4,10 @@ const { readFile } = require('fs/promises');
 const { watch } = require('fs');
 
 const gateway = new ApolloGateway({
-  async superGraphSdl({ update, healthCheck }) {
+  async supergraphSdl({ update, healthCheck }) {
     
     const watcher = watch('./supergraph.graphql');
-    watch.once('change', async () => {
+    watcher.on('change', async () => {
         try {
             const updatedSuperGraph = await readFile('./supergraph.graphql', 'utf-8');
             await healthCheck(updatedSuperGraph)
